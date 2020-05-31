@@ -53,9 +53,7 @@ exports.sourceNodes = async (
 
     const finalUrl = finalUrlObj.pathname + finalUrlObj.search;
 
-    let defaultOutputPath = finalUrlObj.pathname.slice(1);
-    defaultOutputPath = defaultOutputPath;
-    const ext = path.extname(defaultOutputPath).slice(1);
+    let defaultOutputPath = finalUrlObj.pathname;
     const outputPath = sources[i].slug || defaultOutputPath;
     const getDataWithCache = async function (finalUrl) {
       reporter.info(`fetch rsshub ${finalUrl}`);
@@ -87,7 +85,7 @@ exports.sourceNodes = async (
     data = {
       title: finalUrl,
       ...data,
-      atomlink: siteUrl + "/" + outputPath,
+      atomlink: siteUrl + outputPath,
       ttl: cacheTime > 0 ? Math.floor(cacheTime / 1000 / 60) : 0,
     };
 
@@ -120,7 +118,6 @@ exports.sourceNodes = async (
       children: [],
       internal: {
         type: `rsshub`,
-        mediaType: `application/rss+${ext}`,
         content: nodeContent,
         contentDigest: createContentDigest(myData),
       },

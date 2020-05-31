@@ -37,7 +37,7 @@ plugins: [
       rsshubConfig: {},
       rsshub: ["/weseepro/newest"], // default output will be ${prefix}/weseepro/newest.xml
       // or
-      // rsshub: [{url:"/weseepro/newest",query:{limit:10},slug:"test.xml"}]
+      // rsshub: [{url:"/weseepro/newest",query:{limit:10},slug:"/test.xml"}]
     },
   },
 ];
