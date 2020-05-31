@@ -8,22 +8,13 @@ module.exports = async ({ data, type }) => {
 
   switch (type) {
     case "atom":
-      template = path.resolve(
-        __dirname,
-        "node_modules/rsshub/lib/views/atom.art"
-      );
+      template = path.resolve(__dirname, "views/atom.art");
       break;
     case "rss":
-      template = path.resolve(
-        __dirname,
-        "node_modules/rsshub/lib/views/rss.art"
-      );
+      template = path.resolve(__dirname, "views/rss.art");
       break;
     default:
-      template = path.resolve(
-        __dirname,
-        "node_modules/rsshub/lib/views/rss.art"
-      );
+      template = path.resolve(__dirname, "views/rss.art");
       break;
   }
 

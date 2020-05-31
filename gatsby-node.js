@@ -64,67 +64,71 @@ exports.sourceNodes = async (
       await cache.set(finalUrl, obj);
       return remoteData;
     };
-    // check cache
-    let data;
-    if (cacheTime > 0) {
-      const cacheData = await cache.get(finalUrl);
-      if (cacheData) {
-        if (Date.now() - cacheData.created < cacheTime) {
-          // exist
-          reporter.info(`rsshub ${finalUrl} use cache`);
-          data = cacheData.data;
+    try {
+      // check cache
+      let data;
+      if (cacheTime > 0) {
+        const cacheData = await cache.get(finalUrl);
+        if (cacheData) {
+          if (Date.now() - cacheData.created < cacheTime) {
+            // exist
+            reporter.info(`rsshub ${finalUrl} use cache`);
+            data = cacheData.data;
+          } else {
+            data = await getDataWithCache(finalUrl);
+          }
         } else {
           data = await getDataWithCache(finalUrl);
         }
       } else {
         data = await getDataWithCache(finalUrl);
       }
-    } else {
-      data = await getDataWithCache(finalUrl);
+      data = {
+        title: finalUrl,
+        ...data,
+        atomlink: siteUrl + outputPath,
+        ttl: cacheTime > 0 ? Math.floor(cacheTime / 1000 / 60) : 0,
+      };
+
+      const xmlData = await template({
+        sourceUrl: finalUrl,
+        data: data,
+        type: "xml",
+      });
+
+      const atomData = await template({
+        sourceUrl: finalUrl,
+        data: data,
+        type: "atom",
+      });
+      // Data can come from anywhere, but for now create it manually
+      const myData = {
+        sourceUrl: finalUrl,
+        slug: outputPath,
+        data: data,
+        json: JSON.stringify(data),
+        xml: xmlData,
+        atom: atomData,
+      };
+
+      const nodeContent = JSON.stringify(myData);
+
+      const nodeMeta = {
+        id: createNodeId(outputPath),
+        parent: null,
+        children: [],
+        internal: {
+          type: `rsshub`,
+          content: nodeContent,
+          contentDigest: createContentDigest(myData),
+        },
+      };
+
+      const node = Object.assign({}, myData, nodeMeta);
+      createNode(node);
+    } catch (error) {
+      reporter.error(error);
     }
-    data = {
-      title: finalUrl,
-      ...data,
-      atomlink: siteUrl + outputPath,
-      ttl: cacheTime > 0 ? Math.floor(cacheTime / 1000 / 60) : 0,
-    };
-
-    const xmlData = await template({
-      sourceUrl: finalUrl,
-      data: data,
-      type: "xml",
-    });
-
-    const atomData = await template({
-      sourceUrl: finalUrl,
-      data: data,
-      type: "atom",
-    });
-    // Data can come from anywhere, but for now create it manually
-    const myData = {
-      sourceUrl: finalUrl,
-      slug: outputPath,
-      data: data,
-      json: JSON.stringify(data),
-      xml: xmlData,
-      atom: atomData,
-    };
-
-    const nodeContent = JSON.stringify(myData);
-
-    const nodeMeta = {
-      id: createNodeId(outputPath),
-      parent: null,
-      children: [],
-      internal: {
-        type: `rsshub`,
-        content: nodeContent,
-        contentDigest: createContentDigest(myData),
-      },
-    };
-
-    const node = Object.assign({}, myData, nodeMeta);
-    createNode(node);
   }
 
   // You're done, return.

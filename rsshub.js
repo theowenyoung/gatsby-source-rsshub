@@ -25,7 +25,11 @@ const rsshub = {
   get: async (url) => {
     const response = await request(app.callback()).get(url);
     if (response.status < 300) {
-      return response.body;
+      if (response.body.error) {
+        return Promise.reject(new Error(response.body.error.message));
+      } else {
+        return response.body;
+      }
     } else {
       return Promise.reject(new ResponseError(response));
     }
