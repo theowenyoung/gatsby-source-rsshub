@@ -9,14 +9,14 @@ const rsshub = require("./rsshub");
 const template = require("./template");
 
 exports.sourceNodes = async (
-  { actions, createNodeId, createContentDigest },
+  { reporter, actions, cache, createNodeId, createContentDigest },
   pluginOptions
 ) => {
   const { createNode } = actions;
   const siteUrl = pluginOptions.siteUrl || "";
+  const cacheTime = pluginOptions.cacheTime || 0;
   const rsshubConfig = pluginOptions.rsshubConfig || {};
   const sources = pluginOptions.rsshub || [];
-  const prefix = pluginOptions.prefix || "";
   const globalQuery = pluginOptions.query || {};
   const globalQueryObj = new URLSearchParams(globalQuery);
   const globalQueryString = globalQueryObj.toString();
@@ -54,30 +54,59 @@ exports.sourceNodes = async (
     const finalUrl = finalUrlObj.pathname + finalUrlObj.search;
 
     let defaultOutputPath = finalUrlObj.pathname.slice(1);
-    let defaultExt = path.extname(defaultOutputPath) === "" ? ".xml" : "";
-    defaultOutputPath = defaultOutputPath + defaultExt;
+    defaultOutputPath = defaultOutputPath;
     const ext = path.extname(defaultOutputPath).slice(1);
-    const outputPath = prefix + (sources[i].slug || defaultOutputPath);
+    const outputPath = sources[i].slug || defaultOutputPath;
+    const getDataWithCache = async function (finalUrl) {
+      reporter.info(`fetch rsshub ${finalUrl}`);
+      let remoteData = await rsshub.get(finalUrl);
+      let obj = {};
+      obj = { created: Date.now() };
+      obj.data = remoteData;
+      await cache.set(finalUrl, obj);
+      return remoteData;
+    };
+    // check cache
+    let data;
+    if (cacheTime > 0) {
+      const cacheData = await cache.get(finalUrl);
+      if (cacheData) {
+        if (Date.now() - cacheData.created < cacheTime) {
+          // exist
+          reporter.info(`rsshub ${finalUrl} use cache`);
+          data = cacheData.data;
+        } else {
+          data = await getDataWithCache(finalUrl);
+        }
+      } else {
+        data = await getDataWithCache(finalUrl);
+      }
+    } else {
+      data = await getDataWithCache(finalUrl);
+    }
+    data = {
+      ...data,
+      atomlink: siteUrl + outputPath,
+      ttl: cacheTime > 0 ? Math.floor(cacheTime / 1000 / 60) : 0,
+    };
 
-    const data = await rsshub.get(finalUrl);
     const xmlData = await template({
       sourceUrl: finalUrl,
       data: data,
       type: "xml",
-      atomlink: siteUrl + outputPath,
     });
 
     const atomData = await template({
       sourceUrl: finalUrl,
       data: data,
       type: "atom",
-      atomlink: siteUrl + outputPath,
     });
     // Data can come from anywhere, but for now create it manually
     const myData = {
       sourceUrl: finalUrl,
       slug: outputPath,
       data: data,
+      json: JSON.stringify(data),
       xml: xmlData,
       atom: atomData,
     };

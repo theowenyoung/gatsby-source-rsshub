@@ -2,7 +2,7 @@ const art = require("art-template");
 const path = require("path");
 const config = require("rsshub/lib/config").value;
 
-module.exports = async ({ data, type, atomlink }) => {
+module.exports = async ({ data, type }) => {
   type = type || "xml";
   let template;
 
@@ -58,7 +58,6 @@ module.exports = async ({ data, type, atomlink }) => {
 
   const finalData = {
     ...data,
-    atomlink,
   };
   return art(template, finalData);
 };
