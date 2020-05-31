@@ -1,0 +1,14 @@
+{
+  "name": "gatsby-source-rsshub",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "art-template": "^4.13.2",
+    "rsshub": "https://github.com/DIYgod/RSSHub.git",
+    "supertest": "^4.0.2"
+  },
+  "devDependencies": {
+    "prettier": "2.0.5"
+  }
+}
