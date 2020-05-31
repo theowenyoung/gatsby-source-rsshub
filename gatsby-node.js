@@ -85,8 +85,9 @@ exports.sourceNodes = async (
       data = await getDataWithCache(finalUrl);
     }
     data = {
+      title: finalUrl,
       ...data,
-      atomlink: siteUrl + outputPath,
+      atomlink: siteUrl + "/" + outputPath,
       ttl: cacheTime > 0 ? Math.floor(cacheTime / 1000 / 60) : 0,
     };
 
